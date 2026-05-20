@@ -30,6 +30,9 @@ final class ArticleListViewModel: ObservableObject {
     // MARK: - Task Management
     private var searchTask: Task<Void, Never>?
     
+    // MARK: - Cache
+    private var cachedArticles: [Article] = []
+    
     // MARK: - Initialization
     init(repository: ArticleRepositoryProtocol = ArticleRepository()) {
         self.repository = repository
@@ -48,6 +51,12 @@ final class ArticleListViewModel: ObservableObject {
         
         do {
             let articles = try await repository.fetchArticles(limit: 50, offset: 0)
+            
+            // Cachear artículos iniciales para restaurar al limpiar búsqueda
+            if searchQuery.isEmpty {
+                cachedArticles = articles
+            }
+            
             handleLoadedArticles(articles)
         } catch is CancellationError {
             // Delay breve para transición más suave
@@ -83,6 +92,12 @@ final class ArticleListViewModel: ObservableObject {
         guard !Task.isCancelled else { return }
         
         if query.isEmpty {
+            // Al limpiar búsqueda, restaurar artículos cacheados si existen
+            if !cachedArticles.isEmpty {
+                state = .loaded(cachedArticles)
+                return
+            }
+            // Si no hay caché, cargar desde API
             await loadArticles()
             return
         }
