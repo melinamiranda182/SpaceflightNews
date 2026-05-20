@@ -14,24 +14,6 @@ enum HTTPMethod: String {
     case delete = "DELETE"
 }
 
-/// Filtros para artículos
-struct ArticleFilters {
-    var limit: Int = 20
-    var offset: Int = 0
-    var search: String?
-    var hasEvent: Bool?
-    var hasLaunch: Bool?
-    var newsSite: String?
-    var ordering: ArticleOrdering = .publishedDescending
-}
-
-enum ArticleOrdering: String {
-    case publishedAscending = "published_at"
-    case publishedDescending = "-published_at"
-    case updatedAscending = "updated_at"
-    case updatedDescending = "-updated_at"
-}
-
 /// Define todos los endpoints de la API de manera type-safe
 enum APIEndpoint {
     case articles(filters: ArticleFilters)
@@ -63,7 +45,7 @@ enum APIEndpoint {
             var items = [
                 URLQueryItem(name: "limit", value: "\(filters.limit)"),
                 URLQueryItem(name: "offset", value: "\(filters.offset)"),
-                URLQueryItem(name: "ordering", value: filters.ordering.rawValue)
+                URLQueryItem(name: "ordering", value: filters.ordering.apiValue)
             ]
             
             if let search = filters.search, !search.isEmpty {

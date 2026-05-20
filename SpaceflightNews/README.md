@@ -52,6 +52,7 @@ SpaceflightNews/
 ├── Domain/
 │   ├── Models/
 │   │   └── Article.swift             # Modelo de dominio puro
+│   │   └── ArticleFilters.swift      # Filtros de dominio
 │   └── UseCases/
 │
 ├── Data/
@@ -75,6 +76,7 @@ SpaceflightNews/
 ### ✅ Funcionalidades
 - [x] Listado de artículos con imágenes
 - [x] Búsqueda en tiempo real con debounce (500ms)
+- [x] **Cancelación automática de búsquedas** al escribir rápido
 - [x] Navegación a detalle de artículo
 - [x] Compartir artículos
 - [x] Abrir artículo completo en Safari
@@ -88,6 +90,7 @@ SpaceflightNews/
 - [x] Dependency Injection
 - [x] Protocol-oriented programming
 - [x] Repository pattern
+- [x] **Domain models separados de DTOs**
 
 ### ✅ Tecnologías
 - [x] SwiftUI
