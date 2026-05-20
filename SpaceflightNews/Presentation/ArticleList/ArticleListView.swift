@@ -149,11 +149,23 @@ private struct EmptyStateView: View {
     let message: String
     
     var body: some View {
-        ContentUnavailableView(
-            title,
-            systemImage: "magnifyingglass",
-            description: Text(message)
-        )
+        VStack(spacing: 16) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 60))
+                .foregroundStyle(.secondary)
+            
+            VStack(spacing: 8) {
+                Text(title)
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                
+                Text(message)
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .padding(40)
     }
 }
 
@@ -163,14 +175,31 @@ private struct ErrorStateView: View {
     let retryAction: () -> Void
     
     var body: some View {
-        ContentUnavailableView {
-            Label("Error", systemImage: "exclamationmark.triangle")
-        } description: {
-            Text(message)
-        } actions: {
-            Button("Reintentar", action: retryAction)
-                .buttonStyle(.borderedProminent)
+        VStack(spacing: 20) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 60))
+                .foregroundStyle(.orange)
+            
+            VStack(spacing: 8) {
+                Text("Error")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                
+                Text(message)
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            
+            Button(action: retryAction) {
+                Text("Reintentar")
+                    .fontWeight(.semibold)
+                    .frame(minWidth: 120)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
         }
+        .padding(40)
     }
 }
 

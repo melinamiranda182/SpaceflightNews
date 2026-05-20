@@ -187,7 +187,7 @@ User Action → View → ViewModel → Repository → NetworkService → API
 ## 🎨 UI/UX
 
 - **Diseño nativo de iOS** usando componentes del sistema
-- **ContentUnavailableView** para estados empty y error
+- **Vistas de estado personalizadas** para empty y error (compatible iOS 16+)
 - **AsyncImage** para carga eficiente de imágenes
 - **NavigationStack** para navegación moderna
 - **Searchable** para búsqueda integrada
@@ -195,8 +195,8 @@ User Action → View → ViewModel → Repository → NetworkService → API
 
 ## 📱 Compatibilidad
 
-- iOS 17.0+
-- iPadOS 17.0+
+- iOS 16.0+
+- iPadOS 16.0+
 - Swift 5.9+
 
 ## 🔮 Mejoras Futuras
