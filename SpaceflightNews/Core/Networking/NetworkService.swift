@@ -152,7 +152,14 @@ final class NetworkService: NetworkServiceProtocol {
             }
         } catch let error as NetworkError {
             throw error
+        } catch is CancellationError {
+            // Re-lanzar CancellationError sin envolverlo
+            throw CancellationError()
         } catch {
+            // Detectar URLError de cancelación
+            if let urlError = error as? URLError, urlError.code == .cancelled {
+                throw CancellationError()
+            }
             throw NetworkError.unknown(error)
         }
     }

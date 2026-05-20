@@ -27,6 +27,9 @@ final class ArticleListViewModel: ObservableObject {
     private let repository: ArticleRepositoryProtocol
     private var cancellables = Set<AnyCancellable>()
     
+    // MARK: - Task Management
+    private var searchTask: Task<Void, Never>?
+    
     // MARK: - Initialization
     init(repository: ArticleRepositoryProtocol = ArticleRepository()) {
         self.repository = repository
@@ -35,11 +38,22 @@ final class ArticleListViewModel: ObservableObject {
     
     // MARK: - Public Methods
     func loadArticles() async {
+        // Cancelar cualquier búsqueda en progreso
+        searchTask?.cancel()
+        searchTask = nil
+        
+        // Guardar estado anterior por si hay cancelación
+        let previousState = state
         state = .loading
         
         do {
             let articles = try await repository.fetchArticles(limit: 50, offset: 0)
             handleLoadedArticles(articles)
+        } catch is CancellationError {
+            // Delay breve para transición más suave
+            try? await Task.sleep(nanoseconds: 200_000_000) // 0.2 segundos
+            state = previousState
+            return
         } catch {
             state = .error(error.localizedDescription)
         }
@@ -51,25 +65,52 @@ final class ArticleListViewModel: ObservableObject {
             .debounce(for: .milliseconds(500), scheduler: DispatchQueue.main)
             .removeDuplicates()
             .sink { [weak self] query in
-                Task {
-                    await self?.performSearch(query: query)
+                guard let self = self else { return }
+                
+                // Cancelar búsqueda anterior si existe
+                self.searchTask?.cancel()
+                
+                // Iniciar nueva búsqueda
+                self.searchTask = Task {
+                    await self.performSearch(query: query)
                 }
             }
             .store(in: &cancellables)
     }
     
     private func performSearch(query: String) async {
+        // Verificar si la tarea fue cancelada antes de empezar
+        guard !Task.isCancelled else { return }
+        
         if query.isEmpty {
             await loadArticles()
             return
         }
         
+        // Guardar estado anterior
+        let previousState = state
         state = .loading
         
         do {
             let articles = try await repository.searchArticles(query: query, limit: 50)
+            
+            // Verificar cancelación antes de actualizar el estado
+            guard !Task.isCancelled else {
+                state = previousState
+                return
+            }
+            
             handleLoadedArticles(articles)
+        } catch is CancellationError {
+            // Restaurar estado anterior si fue cancelado
+            state = previousState
+            return
         } catch {
+            // Solo actualizar estado si no fue cancelada
+            guard !Task.isCancelled else {
+                state = previousState
+                return
+            }
             state = .error(error.localizedDescription)
         }
     }

@@ -77,6 +77,7 @@ SpaceflightNews/
 - [x] Listado de artículos con imágenes
 - [x] Búsqueda en tiempo real con debounce (500ms)
 - [x] **Cancelación automática de búsquedas** al escribir rápido
+- [x] **Pull-to-refresh** para actualizar contenido
 - [x] Navegación a detalle de artículo
 - [x] Compartir artículos
 - [x] Abrir artículo completo en Safari
@@ -91,6 +92,7 @@ SpaceflightNews/
 - [x] Protocol-oriented programming
 - [x] Repository pattern
 - [x] **Domain models separados de DTOs**
+- [x] **Task cancellation para prevenir race conditions**
 
 ### ✅ Tecnologías
 - [x] SwiftUI

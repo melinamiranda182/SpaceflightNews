@@ -17,6 +17,7 @@ struct ArticleListView: View {
     var body: some View {
         NavigationStack {
             contentView
+                .animation(.easeInOut(duration: 0.2), value: viewModel.state)
                 .navigationTitle("Space News")
                 .searchable(
                     text: $viewModel.searchQuery,
@@ -40,7 +41,7 @@ struct ArticleListView: View {
             LoadingView()
             
         case .loaded(let articles):
-            ArticleList(articles: articles)
+            ArticleList(articles: articles, viewModel: viewModel)
             
         case .empty:
             EmptyStateView(
@@ -66,6 +67,7 @@ struct ArticleListView: View {
 // MARK: - Article List
 private struct ArticleList: View {
     let articles: [Article]
+    @ObservedObject var viewModel: ArticleListViewModel
     
     var body: some View {
         List(articles) { article in
@@ -74,6 +76,9 @@ private struct ArticleList: View {
             }
         }
         .listStyle(.plain)
+        .refreshable {
+            await viewModel.loadArticles()
+        }
         .navigationDestination(for: Article.self) { article in
             ArticleDetailView(article: article)
         }
