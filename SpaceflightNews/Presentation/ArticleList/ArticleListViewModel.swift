@@ -97,8 +97,10 @@ final class ArticleListViewModel: ObservableObject {
                 state = .loaded(cachedArticles)
                 return
             }
-            // Si no hay caché, cargar desde API
-            await loadArticles()
+            
+            if case .idle = state {
+                await loadArticles()
+            }
             return
         }
         

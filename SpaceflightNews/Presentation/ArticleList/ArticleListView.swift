@@ -207,51 +207,27 @@ private struct ErrorStateView: View {
 
 // MARK: - Previews
 #Preview("Lista con datos") {
-    ArticleListView(
-        viewModel: {
-            let vm = ArticleListViewModel(repository: MockArticleRepository())
-            Task { @MainActor in
-                vm.state = .loaded(Article.mocks)
-            }
-            return vm
-        }()
-    )
+    let vm = ArticleListViewModel(repository: MockArticleRepository())
+    vm.state = .loaded(Article.mocks)
+    return ArticleListView(viewModel: vm)
 }
 
 #Preview("Cargando") {
-    ArticleListView(
-        viewModel: {
-            let vm = ArticleListViewModel(repository: MockArticleRepository())
-            Task { @MainActor in
-                vm.state = .loading
-            }
-            return vm
-        }()
-    )
+    let vm = ArticleListViewModel(repository: MockArticleRepository())
+    vm.state = .loading
+    return ArticleListView(viewModel: vm)
 }
 
 #Preview("Vacío") {
-    ArticleListView(
-        viewModel: {
-            let vm = ArticleListViewModel(repository: MockArticleRepository())
-            Task { @MainActor in
-                vm.state = .empty
-            }
-            return vm
-        }()
-    )
+    let vm = ArticleListViewModel(repository: MockArticleRepository())
+    vm.state = .empty
+    return ArticleListView(viewModel: vm)
 }
 
 #Preview("Error") {
-    ArticleListView(
-        viewModel: {
-            let vm = ArticleListViewModel(repository: MockArticleRepository())
-            Task { @MainActor in
-                vm.state = .error("No se pudo conectar con el servidor")
-            }
-            return vm
-        }()
-    )
+    let vm = ArticleListViewModel(repository: MockArticleRepository())
+    vm.state = .error("No se pudo conectar con el servidor")
+    return ArticleListView(viewModel: vm)
 }
 
 // MARK: - Mock Repository para Previews
@@ -270,5 +246,15 @@ private final class MockArticleRepository: ArticleRepositoryProtocol {
     
     func fetchArticle(id: Int) async throws -> Article {
         Article.mock
+    }
+}
+
+// MARK: - Preview Helper
+extension ArticleListViewModel {
+    /// Crea un ViewModel para previews con estado pre-configurado
+    static func preview(state: ArticleListState) -> ArticleListViewModel {
+        let vm = ArticleListViewModel(repository: MockArticleRepository())
+        vm.state = state
+        return vm
     }
 }
