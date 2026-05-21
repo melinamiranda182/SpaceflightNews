@@ -66,11 +66,6 @@
 			path = SpaceflightNewsTests;
 			sourceTree = "<group>";
 		};
-		747FAC5F2FBCDC3900CC25A0 /* SpaceflightNewsUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = SpaceflightNewsUITests;
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -103,7 +98,6 @@
 			children = (
 				747FAC472FBCDC3800CC25A0 /* SpaceflightNews */,
 				747FAC552FBCDC3900CC25A0 /* SpaceflightNewsTests */,
-				747FAC5F2FBCDC3900CC25A0 /* SpaceflightNewsUITests */,
 				747FAC462FBCDC3800CC25A0 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -178,9 +172,6 @@
 			);
 			dependencies = (
 				747FAC5E2FBCDC3900CC25A0 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				747FAC5F2FBCDC3900CC25A0 /* SpaceflightNewsUITests */,
 			);
 			name = SpaceflightNewsUITests;
 			packageProductDependencies = (

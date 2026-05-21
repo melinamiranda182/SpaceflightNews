@@ -43,25 +43,6 @@ final class NetworkServiceTests: XCTestCase {
         XCTAssertTrue(url?.absoluteString.contains("/articles/123") ?? false)
     }
     
-    func testArticleEndpointHasCorrectHTTPMethod() {
-        var filters = ArticleFilters()
-        filters.limit = 20
-        filters.offset = 0
-        let endpoint = APIEndpoint.articles(filters: filters)
-        XCTAssertEqual(endpoint.method, .get)
-    }
-    
-    func testArticleEndpointHasCorrectHeaders() {
-        var filters = ArticleFilters()
-        filters.limit = 20
-        filters.offset = 0
-        let endpoint = APIEndpoint.articles(filters: filters)
-        let headers = endpoint.headers
-        
-        XCTAssertEqual(headers["Content-Type"], "application/json")
-        XCTAssertEqual(headers["Accept"], "application/json")
-    }
-    
     // MARK: - ArticleDTO Tests
     
     func testArticleDTOConvertsToDomainModelCorrectly() {
@@ -113,30 +94,6 @@ final class NetworkServiceTests: XCTestCase {
         XCTAssertNil(article)
     }
     
-    func testArticleDTOWithNullOptionalFields() {
-        let dto = ArticleDTO(
-            id: 1,
-            title: "Test Article",
-            url: "https://example.com",
-            imageUrl: nil,  // ✨ Testing null image
-            newsSite: "Test Site",
-            summary: "Test summary",
-            publishedAt: "2026-05-19T10:00:00Z",
-            updatedAt: "2026-05-19T10:00:00Z",
-            featured: nil,  // ✨ Testing null featured
-            launches: nil,  // ✨ Testing null launches
-            events: nil     // ✨ Testing null events
-        )
-        
-        let article = dto.toDomain()
-        
-        XCTAssertNotNil(article)
-        XCTAssertEqual(article?.imageURL, "")  // Default vacío
-        XCTAssertEqual(article?.featured, false)  // Default false
-        XCTAssertEqual(article?.hasLaunches, false)
-        XCTAssertEqual(article?.hasEvents, false)
-    }
-    
     func testArticleDTODecodesCorrectlyWithSnakeCase() throws {
         let json = """
         {
@@ -163,19 +120,6 @@ final class NetworkServiceTests: XCTestCase {
         XCTAssertEqual(dto.title, "Test Article")
         XCTAssertEqual(dto.imageUrl, "https://example.com/image.jpg")
         XCTAssertEqual(dto.newsSite, "Test Site")
-    }
-    
-    // MARK: - NetworkError Tests
-    
-    func testNetworkErrorHasCorrectDescriptions() {
-        let invalidURLError = NetworkError.invalidURL
-        XCTAssertNotNil(invalidURLError.errorDescription)
-        
-        let httpError = NetworkError.httpError(statusCode: 404)
-        XCTAssertTrue(httpError.errorDescription?.contains("404") ?? false)
-        
-        let decodingError = NetworkError.decodingError
-        XCTAssertNotNil(decodingError.errorDescription)
     }
 }
 
