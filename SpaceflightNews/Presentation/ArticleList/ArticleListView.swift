@@ -55,9 +55,7 @@ struct ArticleListView: View {
             ErrorStateView(
                 message: message,
                 retryAction: {
-                    Task {
-                        await viewModel.loadArticles()
-                    }
+                    await viewModel.loadArticles()
                 }
             )
         }
@@ -172,7 +170,7 @@ private struct EmptyStateView: View {
 // MARK: - Error State View
 private struct ErrorStateView: View {
     let message: String
-    let retryAction: () -> Void
+    let retryAction: () async -> Void
     
     var body: some View {
         VStack(spacing: 20) {
@@ -191,7 +189,11 @@ private struct ErrorStateView: View {
                     .multilineTextAlignment(.center)
             }
             
-            Button(action: retryAction) {
+            Button(action: {
+                Task {
+                    await retryAction()
+                }
+            }) {
                 Text("Reintentar")
                     .fontWeight(.semibold)
                     .frame(minWidth: 120)
