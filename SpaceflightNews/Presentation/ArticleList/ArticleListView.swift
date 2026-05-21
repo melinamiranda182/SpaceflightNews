@@ -91,19 +91,14 @@ private struct ArticleRowView: View {
     
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            AsyncImage(url: URL(string: article.imageURL)) { phase in
-                switch phase {
-                case .empty:
-                    placeholderImage
-                case .success(let image):
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                case .failure:
-                    placeholderImage
-                @unknown default:
-                    placeholderImage
-                }
+            CachedAsyncImage(
+                url: URL(string: article.imageURL)
+            ) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } placeholder: {
+                placeholderImage
             }
             .frame(width: 80, height: 80)
             .clipShape(RoundedRectangle(cornerRadius: 8))

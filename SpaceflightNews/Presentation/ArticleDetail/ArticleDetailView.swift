@@ -35,19 +35,14 @@ struct ArticleDetailView: View {
     
     // MARK: - Header Image
     private var headerImage: some View {
-        AsyncImage(url: URL(string: viewModel.article.imageURL)) { phase in
-            switch phase {
-            case .empty:
-                placeholderImage
-            case .success(let image):
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            case .failure:
-                placeholderImage
-            @unknown default:
-                placeholderImage
-            }
+        CachedAsyncImage(
+            url: URL(string: viewModel.article.imageURL)
+        ) { image in
+            image
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+        } placeholder: {
+            placeholderImage
         }
         .frame(height: 250)
         .clipped()
