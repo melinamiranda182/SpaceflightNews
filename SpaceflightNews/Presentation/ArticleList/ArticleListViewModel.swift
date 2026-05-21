@@ -39,6 +39,11 @@ final class ArticleListViewModel: ObservableObject {
         setupSearchDebounce()
     }
     
+    deinit {
+        searchTask?.cancel()
+        cancellables.removeAll()
+    }
+    
     // MARK: - Public Methods
     func loadArticles() async {
         // Cancelar cualquier búsqueda en progreso
