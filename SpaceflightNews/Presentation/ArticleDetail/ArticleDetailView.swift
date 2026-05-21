@@ -16,21 +16,19 @@ struct ArticleDetailView: View {
     }
     
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                headerImage
-                contentSection
-            }
-        }
-        .navigationTitle("Detalle")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                ShareLink(item: URL(string: viewModel.article.url)!) {
-                    Label("Compartir", systemImage: "square.and.arrow.up")
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    headerImage
+                        .frame(width: geometry.size.width)
+                    
+                    contentSection
+                        .padding()
                 }
             }
         }
+        .navigationTitle("Artículo")
+        .navigationBarTitleDisplayMode(.inline)
     }
     
     // MARK: - Header Image
@@ -41,11 +39,13 @@ struct ArticleDetailView: View {
             image
                 .resizable()
                 .aspectRatio(contentMode: .fill)
+                .frame(height: 250)
+                .frame(maxWidth: .infinity)
+                .clipped()
         } placeholder: {
             placeholderImage
         }
         .frame(height: 250)
-        .clipped()
     }
     
     private var placeholderImage: some View {
@@ -83,18 +83,20 @@ struct ArticleDetailView: View {
                 .font(.body)
                 .lineSpacing(4)
             
+            Spacer()
+            
             Button {
                 if let url = URL(string: viewModel.article.url) {
                     openURL(url)
                 }
             } label: {
                 Label("Leer artículo completo", systemImage: "safari")
+                    .fontWeight(.medium)
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
         }
-        .padding()
     }
 }
 
