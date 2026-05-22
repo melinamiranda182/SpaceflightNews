@@ -187,7 +187,7 @@ La API de Spaceflight News devuelve algunas imágenes mediante HTTP. El proyecto
 
 ## Decisiones Técnicas
 
-### ViewModels con @MainActor
+### 1. ViewModels con @MainActor
 Todos los ViewModels utilizan `@MainActor` para garantizar que las actualizaciones de UI ocurran en el main thread sin código adicional de dispatching.
 
 ```swift
@@ -198,71 +198,189 @@ final class ArticleListViewModel: ObservableObject {
 }
 ```
 
-### Separación Domain/Data
+**Ventaja**: Elimina la necesidad de `DispatchQueue.main.async` y garantiza thread-safety en tiempo de compilación.
+
+### 2. Separación Domain/Data con DTOs
 Los modelos de dominio (`Article`) están separados de los DTOs (`ArticleDTO`). Esto permite:
 - Modificar la API sin afectar la lógica de negocio
 - Testear el dominio de manera independiente
 - Cumplir con el principio de Dependency Inversion
 
 ```swift
-// DTO (Data Layer)
+// DTO (Data Layer) - Mapea la respuesta de la API
 struct ArticleDTO: Decodable {
-    let id: Int
-    let title: String
-    let imageUrl: String  // snake_case de la API
+    let imageUrl: String?  // snake_case de la API, opcional
+    
+    func toDomain() -> Article? {
+        Article(imageURL: imageUrl ?? "")
+    }
 }
 
-// Domain Model
+// Domain Model - Modelo de negocio
 struct Article {
-    let id: Int
-    let title: String
-    let imageURL: String   // camelCase del dominio
+    let imageURL: String   // camelCase, nunca nil
 }
 ```
 
-### Cancelación de Búsquedas Concurrentes
-Al escribir rápidamente, las búsquedas previas se cancelan automáticamente para evitar race conditions y reducir requests innecesarios:
+### 3. State Machine con Enum
+El estado de la UI se modela con un enum exhaustivo que el compilador puede validar:
 
 ```swift
-// En ArticleListViewModel
+enum ArticleListState: Equatable {
+    case idle
+    case loading
+    case loaded([Article])
+    case empty
+    case error(String)
+}
+```
+
+**Ventaja**: El compilador garantiza que todos los casos estén manejados en la UI.
+
+### 4. Cancelación de Búsquedas Concurrentes
+Al escribir rápidamente, las búsquedas previas se cancelan automáticamente para evitar race conditions:
+
+```swift
 private var searchTask: Task<Void, Never>?
 
-func performSearch() async {
-    searchTask?.cancel()  // Cancela búsqueda anterior
+private func performSearch(query: String) async {
+    // Cancelar búsqueda anterior si existe
+    searchTask?.cancel()
+    
     searchTask = Task {
-        // Nueva búsqueda
+        guard !Task.isCancelled else { return }
+        // Realizar búsqueda
+        let articles = try await repository.searchArticles(query: query)
+        guard !Task.isCancelled else { return }
+        state = .loaded(articles)
     }
 }
 ```
 
-### Repository Pattern
-La capa de presentación no conoce los detalles de implementación de la red:
+**Beneficios**:
+- Evita mostrar resultados desactualizados
+- Reduce requests innecesarios a la API
+- Previene condiciones de carrera
+
+### 5. Dependency Injection con Protocols
+Todas las dependencias se inyectan mediante protocolos, facilitando testing y flexibilidad:
 
 ```swift
-// ViewModel depende solo del protocolo
 protocol ArticleRepositoryProtocol {
     func fetchArticles(limit: Int, offset: Int) async throws -> [Article]
-    func searchArticles(query: String) async throws -> [Article]
 }
 
-// La implementación puede cambiar sin afectar a los ViewModels
-class ArticleRepository: ArticleRepositoryProtocol {
-    private let networkService: NetworkServiceProtocol
-    // Implementación
+@MainActor
+final class ArticleListViewModel: ObservableObject {
+    private let repository: ArticleRepositoryProtocol
+    
+    init(repository: ArticleRepositoryProtocol = ArticleRepository()) {
+        self.repository = repository
+    }
 }
 ```
 
-### Combine y async/await
-- **Combine**: Utilizado para streams reactivos como el texto de búsqueda del usuario
-- **async/await**: Utilizado para operaciones asíncronas puntuales como HTTP requests
+**Ventaja**: Permite crear mocks para testing sin modificar el ViewModel.
 
-Cada herramienta se emplea según su propósito específico.
+### 6. Combine + async/await
+- **Combine**: Para streams reactivos (debounce en búsqueda)
+- **async/await**: Para operaciones asíncronas puntuales (HTTP requests)
 
-### CachedAsyncImage
-Implementación personalizada de carga de imágenes que proporciona:
-- Caché en memoria para evitar recargas innecesarias
-- Mejor experiencia de usuario durante el scroll
-- Control sobre timeouts y manejo de errores
+```swift
+// Combine para debounce
+$searchQuery
+    .debounce(for: .milliseconds(500), scheduler: DispatchQueue.main)
+    .sink { query in
+        Task { await self.performSearch(query: query) }
+    }
+```
+
+### 7. Caché de Imágenes con NSCache
+Implementación personalizada que proporciona:
+- Gestión automática de memoria bajo presión
+- Límites configurables (100 MB, 200 imágenes)
+- Limpieza automática en memory warnings
+
+```swift
+final class ImageCache {
+    private let cache: NSCache<NSString, UIImage>
+    
+    init() {
+        cache.totalCostLimit = 100 * 1024 * 1024  // 100 MB
+        cache.countLimit = 200
+    }
+}
+```
+
+## Anti-patterns Evitados
+
+Este proyecto evita conscientemente los siguientes anti-patterns comunes:
+
+### 1. Lógica de negocio en Views
+```swift
+// Incorrecto
+struct ArticleListView: View {
+    var body: some View {
+        List(articles.filter { $0.featured }) { article in
+            // Filtrado en la View
+        }
+    }
+}
+
+// Correcto - Lógica en ViewModel
+@MainActor
+final class ArticleListViewModel: ObservableObject {
+    func loadFeaturedArticles() async {
+        // Filtrado en lógica de negocio
+    }
+}
+```
+
+### 2. Repository ejecutándose en MainActor
+```swift
+// Incorrecto - Bloquea el main thread
+@MainActor
+final class ArticleRepository {
+    func fetchArticles() async throws -> [Article] {
+        // Operaciones de red bloqueando UI
+    }
+}
+
+// Correcto - Repository en background
+final class ArticleRepository {
+    func fetchArticles() async throws -> [Article] {
+        // Network calls en background thread
+    }
+}
+```
+
+### 3. Domain Models acoplados a la API
+```swift
+// Incorrecto
+struct Article: Codable {
+    let image_url: String  // Acoplado a nombres de API
+}
+
+// Correcto - Separación con DTOs
+struct ArticleDTO: Decodable {
+    let image_url: String
+    
+    func toDomain() -> Article {
+        Article(imageURL: image_url)
+    }
+}
+```
+
+### 4. Múltiples fuentes de verdad
+```swift
+// Incorrecto
+@Published var articles: [Article] = []
+@Published var isLoading: Bool = false
+@Published var error: String? = nil
+
+// Correcto - Estado único
+@Published var state: ArticleListState = .idle
+```
 
 ## Mejoras Futuras
 
