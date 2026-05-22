@@ -7,6 +7,20 @@
 
 import SwiftUI
 
+// MARK: - Shared Image Session
+private enum ImageSessionProvider {
+    static let shared: URLSession = {
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForRequest = 15
+        configuration.timeoutIntervalForResource = 30
+        configuration.urlCache = URLCache(
+            memoryCapacity: 20 * 1024 * 1024,  // 20 MB
+            diskCapacity: 50 * 1024 * 1024      // 50 MB
+        )
+        return URLSession(configuration: configuration)
+    }()
+}
+
 /// Vista que carga imágenes con caché automático
 /// Mejora performance evitando recargar imágenes ya vistas
 struct CachedAsyncImage<Content: View, Placeholder: View>: View {
@@ -69,13 +83,7 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
         defer { isLoading = false }
         
         do {
-            // Configurar URLSession con timeout más corto para imágenes
-            let configuration = URLSessionConfiguration.default
-            configuration.timeoutIntervalForRequest = 15
-            configuration.timeoutIntervalForResource = 30
-            let imageSession = URLSession(configuration: configuration)
-            
-            let (data, response) = try await imageSession.data(from: url)
+            let (data, response) = try await ImageSessionProvider.shared.data(from: url)
             
             // Verificar que la respuesta sea válida
             guard let httpResponse = response as? HTTPURLResponse,
